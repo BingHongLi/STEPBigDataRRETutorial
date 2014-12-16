@@ -54,8 +54,8 @@ specifyColumnNums<-function(fileName,delimiter="\",\""){
 # 3.欄位數5000至10000
 #
 # 仍可以直接使用rxImport(inData,outFile) 
-# 但應該會明顯感到速度上的差異，此刻我們可以改採用先讀取小部分的欄位至一個dataFrame,
-# 再把dataFrame內的資料附加到xdf檔案，避免每次讀取所有欄位造成的時間浪費
+# 此處補充一個官網推薦的方法，此方法為官網論壇所發表的大數據匯入方法，
+# 經個人測試，速度極為緩慢。
 # 
 #varNamesTemp<-readLines("stage504_Indicator.csv",n=1)
 #varNames<-strsplit(varNamesTemp,",")[[1]]
