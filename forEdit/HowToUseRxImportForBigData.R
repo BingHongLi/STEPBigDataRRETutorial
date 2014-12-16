@@ -13,7 +13,7 @@
 ### 參考資料
 ### http://www.rdocumentation.org/packages/RevoScaleR/functions/rxImport
 ### http://www.rdocumentation.org/packages/RevoScaleR/functions/RxTextData
-###
+### https://revolutionanalytics.zendesk.com/entries/28416923-Change-variable-type-within-xdf-type-
 ##############################################################################
 #
 # 0.前言
@@ -77,30 +77,49 @@ specifyColumnNums<-function(fileName,delimiter="\",\""){
 #		rxDataFrameToXdf(data=tempDF,outFile="stage504_Indicator.xdf",append="cols",overwrite=T)
 #	}
 #}
-
-rxImportCutColumn<-function(inData,outFile,colsPerRead=1000,sep=","){
+# 已將流程包進自訂函數內，僅需設定輸入資料、輸出資料、每次讀取欄位的數量(預設1000)、每次讀取多少列數及分割符號(預設為,)
+rxImportCutColumn<-function(inData,outFile,colsPerRead=1000,rowsPerRead=50,sep=",",type="auto"){
 	
+	# 讀取檔案的第一行(假設第一行均為標頭檔，在rxImport要拿來當作變數名)
 	varNamesTemp<-readLines(inData,n=1)
-	varNames<-strsplit(varNamesTemp,",")[[1]]	
+	# 將讀取的第一行，按設定的切割符號做切割。
+	varNames<-strsplit(varNamesTemp,sep)[[1]]	
+	# 設定每次讀入欄位的數量
 	colsPerRead<-colsPerRead
+	# 欄位總數除以每次讀入欄位數，求得總共讀檔的次數
 	numReadsFromFile<-ceiling(length(varNames)/colsPerRead)
-	file.remove(inData)			
-	for(i in 1:numReadsFromFile){
+	# 移除本來存在的檔案。
+	file.remove(inData)	
 	
+	# 抽出檔案的部分欄位，並轉存成dataFrame，再把dataFrame存進目標xdf檔		
+	for(i in 1:numReadsFromFile){
+		
+		# 讀取資料，轉存成dataFrame，
+		# varsToKeep內不用動，每次迴圈會自動更新要抽取的欄位
 		tempDF<-rxImport(
 			inData=inData,
 			varsToKeep=paste(varNames[(((i-1)*colsPerRead)+1):((((i-1)*colsPerRead)+1)+colsPerRead)],sep=sep),
-			rowsPerRead=50)
-	
-		if(!file.exists(inData)){
-			rxDataFrameToXdf(data=tempDF,outFile=inData)
-		}else{
+			rowsPerRead=rowsPerRead,
+			type=type
+			)
+		
+		# 檢測檔案是否存在，若不存在則跳至else,會新建一個xdf；若存在則跳入if步驟
+		# 進行附加欄位
+		if(file.exists(inData)){
+			# overwrite=T, 如果有欄位重複，新進的欄位會取代舊有的相同欄位
 			rxDataFrameToXdf(data=tempDF,outFile=inData,append="cols",overwrite=T)
+		}else{
+			rxDataFrameToXdf(data=tempDF,outFile=inData)
 		}
 	}
 }
 
-
-
-
-
+###############################################################################
+#
+# 4.欄位數超過10000
+# 
+# 若讀取檔案為csv等文字檔案時，使用rxImport時，開啟參數type="text"，讀取速度會降低，
+# 但可讀取超過一萬個欄位以上的檔案。
+rxImport("stage642_Indicator.csv","stage642_Indicator.xdf",type="text")
+ 
+ 
