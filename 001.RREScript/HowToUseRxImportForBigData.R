@@ -1,6 +1,6 @@
 ##############################################################################
 ###
-### Revolution R Enterprise 大數據匯入篇
+### Revolution R Enterprise 大數據匯入
 ### 李秉鴻
 ### 採智科技
 ### 
@@ -19,6 +19,8 @@
 # 0.前言
 #
 # 不經一事，不長一智，果然人類世界還是要需要經驗的。
+# 難怪很多人不喜歡用非開源軟體，要找錯誤，網路上又沒有什麼資訊時，詢問窗口又很麻煩時
+# 只好往原始碼動腦筋了，但找不到原始碼的時候，就會很幹了。
 #
 # rxImport在未定義type的情況下，只能轉10000個欄位的xdf檔
 # 如果沒有定義type時, 又想匯入超過10000個欄位的檔案時
@@ -47,7 +49,7 @@ specifyColumnNums<-function(fileName,delimiter="\",\""){
 # 2.欄位數5000以下
 # 
 # 直接使用rxImport(inData,outFile)
-# 
+# 若覺得讀取速度過慢，可參考3.欄位數5000至10000的操作方法
 #
 ##############################################################################
 #
@@ -87,7 +89,9 @@ rxImportCutColumn<-function(inData,outFile,colsPerRead=1000,rowsPerRead=50,sep="
 	# 欄位總數除以每次讀入欄位數，求得總共讀檔的次數
 	numReadsFromFile<-ceiling(length(varNames)/colsPerRead)
 	# 移除本來存在的檔案。
-	file.remove(inData)	
+	if(file.exists(outFile)){
+		file.remove(outFile)
+	}	
 	
 	# 抽出檔案的部分欄位，並轉存成dataFrame，再把dataFrame存進目標xdf檔		
 	for(i in 1:numReadsFromFile){
@@ -103,11 +107,11 @@ rxImportCutColumn<-function(inData,outFile,colsPerRead=1000,rowsPerRead=50,sep="
 		
 		# 檢測檔案是否存在，若不存在則跳至else,會新建一個xdf；若存在則跳入if步驟
 		# 進行附加欄位
-		if(file.exists(inData)){
+		if(file.exists(outFile)){
 			# overwrite=T, 如果有欄位重複，新進的欄位會取代舊有的相同欄位
-			rxDataFrameToXdf(data=tempDF,outFile=inData,append="cols",overwrite=T)
+			rxDataFrameToXdf(data=tempDF,outFile=outFile,append="cols",overwrite=T)
 		}else{
-			rxDataFrameToXdf(data=tempDF,outFile=inData)
+			rxDataFrameToXdf(data=tempDF,outFile=outFile)
 		}
 	}
 }
